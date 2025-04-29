@@ -1,4 +1,4 @@
-
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -65,7 +65,9 @@ const FeaturedRooms = () => {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full">Book Now</Button>
+                <Button className="w-full" asChild>
+                  <Link to={`/booking?roomId=${room.id}`}>Book Now</Link>
+                </Button>
               </CardFooter>
             </Card>
           ))}

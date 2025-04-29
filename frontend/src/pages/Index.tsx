@@ -1,4 +1,4 @@
-
+import { Link } from "react-router-dom";
 import Hero from "@/components/Hero";
 import FeaturedRooms from "@/components/FeaturedRooms";
 import Testimonials from "@/components/Testimonials";
@@ -23,8 +23,10 @@ const Index = () => {
               <p className="text-villa-700 mb-8">
                 Whether you're seeking a romantic getaway, a family vacation, or a peaceful retreat, our dedicated staff is committed to making your stay exceptional.
               </p>
-              <Button variant="outline" className="flex items-center gap-2">
-                Discover Our Story <ArrowRight size={16} />
+              <Button variant="outline" className="flex items-center gap-2" asChild>
+                <Link to="/about">
+                  Discover Our Story <ArrowRight size={16} />
+                </Link>
               </Button>
             </div>
             <div className="md:w-1/2">
@@ -106,8 +108,8 @@ const Index = () => {
           <p className="text-xl text-gray-100 mb-8 max-w-2xl mx-auto">
             Book your stay today and discover the perfect balance of comfort, luxury, and natural beauty.
           </p>
-          <Button size="lg" className="bg-primary hover:bg-primary/90">
-            Reserve Your Stay Now
+          <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+            <Link to="/booking">Reserve Your Stay Now</Link>
           </Button>
         </div>
       </section>

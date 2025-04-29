@@ -1,4 +1,4 @@
-
+import { Link } from "react-router-dom";
 import { ChevronRight, Palmtree, Utensils, GlassWater, UmbrellaOff, Wine, Dumbbell, Bed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -149,7 +149,9 @@ const Services = () => {
                 <div>
                   <Separator className="my-4" />
                   <p className="font-medium text-primary mb-4">{pkg.price}</p>
-                  <Button className="w-full">Book This Package</Button>
+                  <Button className="w-full" asChild>
+                    <Link to="/booking">Book This Package</Link>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -235,8 +237,8 @@ const Services = () => {
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="py-20 bg-cover bg-center relative" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")' }}>
+      {/* CTA Section */}
+      <section className="py-20 bg-cover bg-center relative" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1568084680786-a84f91d1153c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")' }}>
         <div className="absolute inset-0 bg-black/60"></div>
         <div className="container mx-auto px-4 relative z-10 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-semibold text-white mb-4">
@@ -246,11 +248,11 @@ const Services = () => {
             Contact our concierge team to customize your perfect stay at Villa Serenity.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="bg-primary hover:bg-primary/90">
-              Book Your Stay
+            <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
+              <Link to="/booking">Book Your Stay</Link>
             </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/20">
-              Contact Concierge
+            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/20" asChild>
+              <Link to="/contact">Contact Concierge</Link>
             </Button>
           </div>
         </div>
