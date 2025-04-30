@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/error');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // Load env variables
 dotenv.config();
@@ -34,18 +35,40 @@ app.use('/api/team', require('./routes/teamRoutes'));
 app.use('/api/amenities', require('./routes/amenityRoutes'));
 app.use('/api/packages', require('./routes/packageRoutes'));
 
+// Test DB Route - Diagnostic Purpose
+app.get('/api/test-db', async (req, res) => {
+  try {
+    // Check if users collection exists and count documents
+    const usersCollection = mongoose.connection.db.collection('users');
+    const count = await usersCollection.countDocuments();
+    
+    res.json({
+      success: true,
+      database: mongoose.connection.name,
+      collections: await mongoose.connection.db.listCollections().toArray(),
+      userCount: count
+    });
+  } catch (err) {
+    console.error('Test DB Error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
 // Error handler middleware
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () =>
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
-);
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.log(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => process.exit(1));
+app.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  
+  // Add some startup info
+  console.log('----------------------------------------');
+  console.log('API Routes:');
+  console.log('- Auth: POST /api/auth/register, POST /api/auth/login');
+  console.log('- Users: GET /api/auth/me (Protected)');
+  console.log('----------------------------------------');
 });

@@ -181,6 +181,17 @@ const Booking = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setFormError(null);
     
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to complete your booking",
+        variant: "destructive",
+      });
+      navigate("/login", { state: { from: "/booking" } });
+      return;
+    }
+
     if (!selectedRoom) {
       toast({
         title: "Room Selection Required",
@@ -221,57 +232,26 @@ const Booking = () => {
 
     setIsLoading(true);
 
-    // Get token from local storage if user is logged in
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      // For demo purposes, let's create a mock token so we can complete the booking
-      // In a real app, you'd redirect to login
-      const mockToken = "demo-token-for-testing";
-      localStorage.setItem("token", mockToken);
-      
-      toast({
-        title: "Demo Mode",
-        description: "Using a temporary token for demonstration",
-      });
-      
-      // Uncomment the following for real authentication behavior
-      /*
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to complete your booking",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      navigate("/login", { state: { from: "/booking", bookingData: values } });
-      return;
-      */
-    }
-
     try {
-      // Calculate the number of nights
-      const nights = Math.ceil(
-        (values.checkOut.getTime() - values.checkIn.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      
-      // Prepare booking data
       const bookingData = {
         room: selectedRoom.id,
-        checkIn: values.checkIn,
-        checkOut: values.checkOut,
+        checkIn: values.checkIn.toISOString(),  // Convert dates to ISO string
+        checkOut: values.checkOut.toISOString(),
         guests: {
           adults: values.adults,
           children: values.children,
         },
-        specialRequests: values.specialRequests,
+        specialRequests: values.specialRequests || "",
+        name: values.name,
+        email: values.email,
+        phone: values.phone
       };
 
-      // Submit booking to API
       const response = await fetch("http://localhost:5000/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Authorization": `Bearer ${token}`,  // Add Bearer prefix
         },
         body: JSON.stringify(bookingData),
       });

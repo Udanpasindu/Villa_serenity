@@ -11,9 +11,24 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(email, password);
-    if (success) {
-      navigate('/');
+    // const success = await login(email, password);
+    // if (success) {
+    //   navigate('/');
+    // }
+
+    // After successful login
+    const response = await fetch('http://localhost:5000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      // Store token in localStorage
+      localStorage.setItem('token', data.token);
     }
   };
 

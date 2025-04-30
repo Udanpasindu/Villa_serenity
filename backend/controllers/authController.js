@@ -5,20 +5,88 @@ const crypto = require('crypto');
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
-exports.register = async (req, res, next) => {
+exports.register = async (req, res) => {
+  console.log('Registration request received:', {
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password ? '[MASKED]' : 'undefined'
+  });
+  
   try {
     const { name, email, password } = req.body;
+    
+    // Basic validation
+    if (!name || !email || !password) {
+      console.log('Missing required fields');
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide name, email and password'
+      });
+    }
 
-    // Create user
-    const user = await User.create({
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      console.log('User already exists with email:', email);
+      return res.status(400).json({
+        success: false,
+        error: 'Email already registered'
+      });
+    }
+
+    console.log('Creating new user:', name, email);
+    
+    // Create user - explicitly define fields to avoid unwanted data
+    const user = new User({
       name,
       email,
-      password
+      password,
+      role: 'user' // Default role
     });
-
-    sendTokenResponse(user, 201, res);
+    
+    // Save user - separated from creation for better error handling
+    await user.save();
+    
+    console.log('User created successfully:', user._id);
+    
+    // Generate token
+    const token = user.getSignedJwtToken();
+    
+    // Return response directly instead of using helper function
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (err) {
-    next(err);
+    console.error('Registration error:', err);
+    
+    // Handle specific MongoDB errors
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already exists'
+      });
+    }
+    
+    // Handle validation errors
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(val => val.message);
+      return res.status(400).json({
+        success: false,
+        error: messages.join(', ')
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Server error'
+    });
   }
 };
 
@@ -142,35 +210,4 @@ exports.forgotPassword = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
-
-// Helper function to get token from model, create cookie and send response
-const sendTokenResponse = (user, statusCode, res) => {
-  // Create token
-  const token = user.getSignedJwtToken();
-
-  const options = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true
-  };
-
-  // Use secure cookies in production
-  if (process.env.NODE_ENV === 'production') {
-    options.secure = true;
-  }
-
-  res
-    .status(statusCode)
-    .json({
-      success: true,
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
 };
