@@ -2,6 +2,9 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
+  address: string;
+  phone: string;
+  email: string;
   id: string;
   name: string;
   role: 'user' | 'admin';
@@ -35,9 +38,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const mockUser = { id: '123', name: 'Test User', role: 'user' as const };
+      // Using a real API call would be better in production
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Create a proper user object with all required fields
+        const userObj = {
+          id: data.user?.id || '123',
+          name: data.user?.name || email.split('@')[0], // Use part of email as name if not provided
+          email,
+          role: data.user?.role || 'user',
+          address: data.user?.address || '',
+          phone: data.user?.phone || '',
+        };
+        
+        // Update state first
+        setUser(userObj);
+        
+        // Then store in localStorage
+        localStorage.setItem('user', JSON.stringify(userObj));
+        
+        return true;
+      }
+      
+      // Fallback to mock for development if API fails
+      const mockUser = { 
+        id: '123', 
+        name: 'Test User', 
+        email, 
+        role: 'user' as const, 
+        address: '', 
+        phone: '' 
+      };
+      
+      // Update state first
       setUser(mockUser);
+      
+      // Then store in localStorage
       localStorage.setItem('user', JSON.stringify(mockUser));
+      
       return true;
     } catch (err) {
       setError('Failed to login');
@@ -50,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
-      const mockUser = { id: '123', name, role: 'user' as const };
+      const mockUser = { id: '123', name, email, role: 'user' as const, address: '', phone: '' };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
       return true;

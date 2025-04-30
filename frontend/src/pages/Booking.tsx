@@ -233,6 +233,7 @@ const Booking = () => {
     setIsLoading(true);
 
     try {
+      // Ensure we're sending data in the correct format for MongoDB
       const bookingData = {
         room: selectedRoom.id,
         checkIn: values.checkIn.toISOString(),  // Convert dates to ISO string
@@ -245,13 +246,14 @@ const Booking = () => {
         name: values.name,
         email: values.email,
         phone: values.phone
+        // Don't include totalPrice - server will calculate it
       };
 
       const response = await fetch("http://localhost:5000/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,  // Add Bearer prefix
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(bookingData),
       });
@@ -264,7 +266,7 @@ const Booking = () => {
           title: "Booking Confirmed!",
           description: "Your booking has been successfully confirmed.",
         });
-        // Navigate to confirmation page with a slight delay to allow the user to see the toast
+        // Navigate to confirmation page with the MongoDB _id
         setTimeout(() => {
           navigate(`/booking-confirmation/${data.data._id}`);
         }, 1500);

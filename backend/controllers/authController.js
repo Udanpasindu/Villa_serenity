@@ -96,9 +96,12 @@ exports.register = async (req, res) => {
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    
+    console.log(`Login attempt for email: ${email}`);
 
     // Validate email & password
     if (!email || !password) {
+      console.log('Missing email or password');
       return res.status(400).json({
         success: false,
         error: 'Please provide an email and password'
@@ -109,12 +112,15 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
+      console.log(`User not found with email: ${email}`);
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials'
       });
     }
 
+    console.log(`Found user: ${user._id}`);
+    
     // Check if password matches
     const isMatch = await user.matchPassword(password);
 
@@ -125,9 +131,14 @@ exports.login = async (req, res, next) => {
       });
     }
 
+    // Use the helper function to send token response
     sendTokenResponse(user, 200, res);
   } catch (err) {
-    next(err);
+    console.error('Login error:', err);
+    res.status(500).json({
+      success: false,
+      error: 'Server error during login'
+    });
   }
 };
 
@@ -210,4 +221,36 @@ exports.forgotPassword = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// Helper function to get token from model, create cookie and send response
+const sendTokenResponse = (user, statusCode, res) => {
+  // Create token
+  const token = user.getSignedJwtToken();
+
+  const options = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true
+  };
+
+  // Use secure flag in production
+  if (process.env.NODE_ENV === 'production') {
+    options.secure = true;
+  }
+
+  res
+    .status(statusCode)
+    .cookie('token', token, options)
+    .json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
 };

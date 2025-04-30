@@ -9,6 +9,7 @@ import BookingConfirmation from './pages/BookingConfirmation';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Profile from './pages/Profile'; // Added missing import
 import { AuthProvider } from '@/context/auth';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/booking" element={<Layout><Booking /></Layout>} />
           <Route path="/booking-confirmation/:id" element={<Layout><BookingConfirmation /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
+          <Route path="/profile" element={<Layout><Profile /></Layout>} /> {/* Add the profile route */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="*" element={<Layout><NotFound /></Layout>} />

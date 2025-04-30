@@ -1,5 +1,6 @@
 const Room = require('../models/Room');
 const Booking = require('../models/Booking');
+const mongoose = require('mongoose');
 
 // @desc    Get all rooms
 // @route   GET /api/rooms
@@ -158,10 +159,37 @@ exports.deleteRoom = async (req, res, next) => {
 exports.checkAvailability = async (req, res, next) => {
   try {
     const { checkIn, checkOut, roomId } = req.body;
+    console.log("Checking availability for room:", roomId);
+    
+    // More flexible approach for handling both MongoDB ObjectIds and simple IDs
+    let query;
+    if (mongoose.Types.ObjectId.isValid(roomId)) {
+      // If it's a valid ObjectId, use it directly
+      query = { room: mongoose.Types.ObjectId(roomId) };
+    } else {
+      // For mock data with simple IDs, use string comparison (development only)
+      // In production, you should always validate for proper ObjectIds
+      console.log("Using string ID for development:", roomId);
+      query = { room: roomId };
+    }
     
     // Convert to date objects
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
+    let checkInDate, checkOutDate;
+    try {
+      checkInDate = new Date(checkIn);
+      checkOutDate = new Date(checkOut);
+      
+      // Validate dates are valid
+      if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+        throw new Error('Invalid date format');
+      }
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date format',
+        isAvailable: false
+      });
+    }
     
     // Validate dates
     if (checkInDate >= checkOutDate) {
@@ -172,12 +200,20 @@ exports.checkAvailability = async (req, res, next) => {
       });
     }
     
-    // For demo purposes, let's always return available
-    // In production, you'd actually check the database
-    /*
-    // Find overlapping bookings
+    // For development with mock data, always return available
+    // Comment out this section in production
+    if (!mongoose.Types.ObjectId.isValid(roomId)) {
+      res.status(200).json({
+        success: true,
+        isAvailable: true,
+        message: "Room is available for the selected dates (development mode)"
+      });
+      return;
+    }
+    
+    // Find overlapping bookings with proper query
     const overlappingBookings = await Booking.find({
-      room: roomId,
+      ...query,
       status: { $ne: 'cancelled' },
       $or: [
         { checkIn: { $lt: checkOutDate }, checkOut: { $gt: checkInDate } }
@@ -185,20 +221,17 @@ exports.checkAvailability = async (req, res, next) => {
     });
     
     const isAvailable = overlappingBookings.length === 0;
-    */
-    
-    const isAvailable = true;
     
     res.status(200).json({
       success: true,
       isAvailable,
-      message: "Room is available for the selected dates"
+      message: isAvailable ? "Room is available for the selected dates" : "Room is not available for the selected dates"
     });
   } catch (err) {
     console.error("Error checking availability:", err);
     res.status(500).json({
       success: false,
-      error: 'Server error when checking availability',
+      error: 'Server error when checking availability: ' + err.message,
       isAvailable: false
     });
   }

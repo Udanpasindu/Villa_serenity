@@ -1,12 +1,56 @@
 const Booking = require('../models/Booking');
 const Room = require('../models/Room');
+const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
+
+// @desc    Get all bookings
+// @route   GET /api/bookings
+// @access  Private
+exports.getBookings = async (req, res, next) => {
+  try {
+    let query;
+    
+    // If regular user, show only their bookings
+    if (req.user.role !== 'admin') {
+      query = Booking.find({ user: req.user.id });
+    } else {
+      // If admin, show all bookings
+      query = Booking.find();
+    }
+    
+    // Add populate for related data
+    const bookings = await query
+      .populate({
+        path: 'user',
+        select: 'name email'
+      })
+      .populate({
+        path: 'room',
+        select: 'name price'
+      })
+      .sort('-createdAt');
+    
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      data: bookings
+    });
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    res.status(500).json({
+      success: false,
+      error: "Server error when fetching bookings"
+    });
+  }
+};
 
 // @desc    Create new booking
 // @route   POST /api/bookings
 // @access  Private
 exports.createBooking = async (req, res, next) => {
   try {
+    // Comment out mock booking implementation
+    /* 
     // For demo purposes, let's create a mock booking
     const mockBooking = {
       _id: "booking-" + Date.now(),
@@ -30,9 +74,9 @@ exports.createBooking = async (req, res, next) => {
       success: true,
       data: mockBooking
     });
+    */
     
-    // Uncomment this for real implementation with database
-    /* 
+    // Real implementation with database
     // Add user ID to request body
     req.body.user = req.user.id;
     
@@ -83,11 +127,37 @@ exports.createBooking = async (req, res, next) => {
     // Create booking
     const booking = await Booking.create(req.body);
     
+    // Try to send confirmation email
+    try {
+      const user = await User.findById(req.user.id);
+      
+      await sendEmail({
+        email: user.email,
+        subject: 'Booking Confirmation - Villa Serenity',
+        message: `
+          <h1>Booking Confirmation</h1>
+          <p>Dear ${user.name},</p>
+          <p>Your booking at Villa Serenity has been confirmed.</p>
+          <h2>Booking Details:</h2>
+          <ul>
+            <li><strong>Room:</strong> ${room.name}</li>
+            <li><strong>Check-in:</strong> ${new Date(checkIn).toLocaleDateString()}</li>
+            <li><strong>Check-out:</strong> ${new Date(checkOut).toLocaleDateString()}</li>
+            <li><strong>Total Price:</strong> $${booking.totalPrice}</li>
+          </ul>
+          <p>We look forward to welcoming you!</p>
+        `
+      });
+    } catch (emailErr) {
+      console.log('Email could not be sent', emailErr);
+      // Don't fail the booking if email fails
+    }
+    
     res.status(201).json({
       success: true,
       data: booking
     });
-    */
+    
   } catch (err) {
     console.error("Error creating booking:", err);
     res.status(500).json({
@@ -97,48 +167,13 @@ exports.createBooking = async (req, res, next) => {
   }
 };
 
-// @desc    Get all bookings
-// @route   GET /api/bookings
-// @access  Private (Admin)
-exports.getBookings = async (req, res, next) => {
-  try {
-    let query;
-    
-    // If regular user, show only their bookings
-    if (req.user.role !== 'admin') {
-      query = Booking.find({ user: req.user.id });
-    } else {
-      // If admin, show all bookings
-      query = Booking.find();
-    }
-    
-    // Add populate for related data
-    const bookings = await query
-      .populate({
-        path: 'user',
-        select: 'name email'
-      })
-      .populate({
-        path: 'room',
-        select: 'name price'
-      })
-      .sort('-createdAt');
-    
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      data: bookings
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
 // @desc    Get single booking
 // @route   GET /api/bookings/:id
 // @access  Private
 exports.getBooking = async (req, res, next) => {
   try {
+    // Comment out mock booking response
+    /*
     // For demo purposes, let's create a mock booking response
     if (req.params.id.startsWith("booking-")) {
       const mockBooking = {
@@ -176,9 +211,9 @@ exports.getBooking = async (req, res, next) => {
       success: false,
       error: "Booking not found"
     });
+    */
     
-    // Uncomment for real implementation
-    /*
+    // Real implementation
     const booking = await Booking.findById(req.params.id)
       .populate({
         path: 'user',
@@ -208,7 +243,7 @@ exports.getBooking = async (req, res, next) => {
       success: true,
       data: booking
     });
-    */
+    
   } catch (err) {
     console.error("Error fetching booking:", err);
     res.status(500).json({
