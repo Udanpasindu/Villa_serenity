@@ -9,9 +9,6 @@ const mongoose = require('mongoose');
 // Load env variables
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 // Initialize app
 const app = express();
 
@@ -62,13 +59,23 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  
-  // Add some startup info
-  console.log('----------------------------------------');
-  console.log('API Routes:');
-  console.log('- Auth: POST /api/auth/register, POST /api/auth/login');
-  console.log('- Users: GET /api/auth/me (Protected)');
-  console.log('----------------------------------------');
-});
+// Start function ensures DB is connected before listening
+const start = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+      console.log('----------------------------------------');
+      console.log('API Routes:');
+      console.log('- Auth: POST /api/auth/register, POST /api/auth/login');
+      console.log('- Users: GET /api/auth/me (Protected)');
+      console.log('----------------------------------------');
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err.message || err);
+    process.exit(1);
+  }
+};
+
+start();

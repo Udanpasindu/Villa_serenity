@@ -16,7 +16,19 @@ const connectDB = async () => {
 
     return conn;
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    // Print full error (stack) for diagnostics
+    console.error('MongoDB connection error:');
+    console.error(error && error.stack ? error.stack : error);
+
+    // Redact credentials before printing the URI if available
+    try {
+      const raw = process.env.MONGO_URI || '';
+      const redacted = raw.replace(/(mongodb\+srv:\/\/)([^:]+):([^@]+)@/, '$1<user>:<password>@');
+      console.error('Used MONGO_URI (redacted):', redacted);
+    } catch (e) {
+      // ignore
+    }
+
     console.error('Please check your MongoDB connection string and network settings');
     process.exit(1);
   }
