@@ -24,11 +24,11 @@ const Hero = () => {
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-white" asChild>
                 <Link to="/booking">Book Your Stay</Link>
               </Button>
-              <Button variant="outline" size="lg" asChild className="border-white text-white hover:bg-white/20">
+                <Button variant="outline" size="lg" asChild className="border-2 border-emerald-500 text-white hover:bg-black/20 bg-black/30">
                 <Link to="/about">
                   Explore More
                 </Link>
-              </Button>
+                </Button>
             </div>
           </div>
         </div>
